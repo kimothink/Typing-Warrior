@@ -1,0 +1,206 @@
+@page "/"
+@implements IDisposable
+
+<PageTitle>Typing Warrior</PageTitle>
+
+<div class="game-wrap">
+    <h1>Typing Warrior</h1>
+    <p class="desc">좀비의 이름표를 정확히 입력해 주인공을 지키세요.</p>
+
+    <div class="hud">
+        <div>점수: <strong>@Score</strong></div>
+        <div class="bar-wrap">
+            <label>주인공 HP</label>
+            <div class="bar hp"><span style="width:@HeroHp%"></span></div>
+        </div>
+        <div class="bar-wrap">
+            <label>주인공 MP</label>
+            <div class="bar mp"><span style="width:@HeroMp%"></span></div>
+        </div>
+    </div>
+
+    <div class="arena">
+        @foreach (var enemy in Enemies)
+        {
+            <div class="enemy" style="left:@enemy.Position%; top:@enemy.Row%;" title="@enemy.Word">
+                <div class="name-tag">@enemy.Word</div>
+                <div class="enemy-body">🧟</div>
+                <div class="bar enemy-hp"><span style="width:@enemy.Hp%"></span></div>
+            </div>
+        }
+
+        <div class="hero">
+            <div class="hero-body">🧑‍🚀</div>
+            <div class="weapon">🔫</div>
+            @if (IsShooting)
+            {
+                <div class="shot-effect">💥</div>
+            }
+        </div>
+    </div>
+
+    @if (HeroHp <= 0)
+    {
+        <div class="game-over">게임 오버! 새로고침해서 다시 시작하세요.</div>
+    }
+
+    <input class="typing-input"
+           @bind="CurrentInput"
+           @bind:event="oninput"
+           @onkeydown="HandleKeyDown"
+           placeholder="좀비 이름표 단어 입력 후 Enter"
+           disabled="@(HeroHp <= 0)" />
+</div>
+
+@code {
+    private readonly Random _random = new();
+    private readonly List<string> _wordPool =
+    [
+        "walker", "hunter", "virus", "shadow", "danger", "toxic", "infected", "crawler"
+    ];
+
+    private System.Timers.Timer? _gameTimer;
+    private System.Timers.Timer? _spawnTimer;
+    private System.Timers.Timer? _shotTimer;
+
+    private readonly List<Enemy> Enemies = [];
+    private string CurrentInput = string.Empty;
+
+    private int Score;
+    private int HeroHp = 100;
+    private int HeroMp = 100;
+    private bool IsShooting;
+
+    protected override void OnInitialized()
+    {
+        SpawnEnemy();
+        SpawnEnemy();
+
+        _gameTimer = new System.Timers.Timer(100);
+        _gameTimer.Elapsed += (_, _) => Tick();
+        _gameTimer.Start();
+
+        _spawnTimer = new System.Timers.Timer(2500);
+        _spawnTimer.Elapsed += (_, _) =>
+        {
+            if (HeroHp > 0)
+            {
+                SpawnEnemy();
+                InvokeAsync(StateHasChanged);
+            }
+        };
+        _spawnTimer.Start();
+    }
+
+    private void Tick()
+    {
+        if (HeroHp <= 0)
+        {
+            return;
+        }
+
+        var bites = 0;
+        foreach (var enemy in Enemies)
+        {
+            enemy.Position -= enemy.Speed;
+            if (enemy.Position <= 5)
+            {
+                enemy.Position = 5;
+                bites++;
+            }
+        }
+
+        if (bites > 0)
+        {
+            HeroHp = Math.Max(0, HeroHp - bites * 4);
+        }
+
+        HeroMp = Math.Min(100, HeroMp + 1);
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SpawnEnemy()
+    {
+        if (Enemies.Count >= 8)
+        {
+            return;
+        }
+
+        Enemies.Add(new Enemy
+        {
+            Word = _wordPool[_random.Next(_wordPool.Count)],
+            Position = 88,
+            Row = 8 + _random.Next(45),
+            Hp = 100,
+            Speed = 0.35 + _random.NextDouble() * 0.25
+        });
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key != "Enter" || HeroHp <= 0)
+        {
+            return;
+        }
+
+        AttackByWord();
+    }
+
+    private void AttackByWord()
+    {
+        var typed = CurrentInput.Trim();
+        CurrentInput = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(typed))
+        {
+            return;
+        }
+
+        var target = Enemies
+            .Where(enemy => string.Equals(enemy.Word, typed, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(enemy => enemy.Position)
+            .FirstOrDefault();
+
+        if (target is null || HeroMp < 10)
+        {
+            return;
+        }
+
+        HeroMp -= 10;
+        target.Hp -= 50;
+        IsShooting = true;
+
+        _shotTimer?.Dispose();
+        _shotTimer = new System.Timers.Timer(120) { AutoReset = false };
+        _shotTimer.Elapsed += (_, _) =>
+        {
+            IsShooting = false;
+            InvokeAsync(StateHasChanged);
+        };
+        _shotTimer.Start();
+
+        if (target.Hp <= 0)
+        {
+            Enemies.Remove(target);
+            Score += 100;
+            SpawnEnemy();
+        }
+    }
+
+    public void Dispose()
+    {
+        _gameTimer?.Dispose();
+        _spawnTimer?.Dispose();
+        _shotTimer?.Dispose();
+    }
+
+    private sealed class Enemy
+    {
+        public required string Word { get; init; }
+        public double Position { get; set; }
+        public int Row { get; init; }
+        public int Hp { get; set; }
+        public double Speed { get; init; }
+    }
+}

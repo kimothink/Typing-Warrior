@@ -1,0 +1,137 @@
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #0a0f1d;
+  color: #f8fbff;
+}
+
+.page {
+  min-height: 100vh;
+}
+
+main {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.game-wrap {
+  width: min(980px, 100%);
+}
+
+.desc {
+  margin-top: -0.3rem;
+  color: #b8c7f0;
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: 130px 1fr 1fr;
+  gap: 0.8rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.bar-wrap label {
+  font-size: 0.8rem;
+  color: #b8c7f0;
+}
+
+.bar {
+  background: #1f2945;
+  border-radius: 999px;
+  overflow: hidden;
+  height: 14px;
+  border: 1px solid #35446e;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+}
+
+.bar.hp span,
+.enemy-hp span {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.bar.mp span {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.arena {
+  position: relative;
+  height: 430px;
+  border-radius: 18px;
+  border: 1px solid #25345c;
+  background: linear-gradient(#111c34 0%, #111c34 68%, #2f402f 68%, #263726 100%);
+  overflow: hidden;
+}
+
+.enemy {
+  position: absolute;
+  transform: translateX(-50%);
+  min-width: 100px;
+  text-align: center;
+}
+
+.name-tag {
+  background: #fef9c3;
+  color: #1f2937;
+  border-radius: 999px;
+  padding: 0.18rem 0.65rem;
+  display: inline-block;
+  font-weight: 700;
+}
+
+.enemy-body {
+  font-size: 2rem;
+}
+
+.enemy-hp {
+  margin-top: 0.15rem;
+  height: 8px;
+}
+
+.hero {
+  position: absolute;
+  left: 8%;
+  bottom: 10%;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 2.1rem;
+}
+
+.weapon {
+  font-size: 1.7rem;
+}
+
+.shot-effect {
+  font-size: 1.2rem;
+}
+
+.typing-input {
+  width: 100%;
+  margin-top: 1rem;
+  border: 1px solid #304169;
+  background: #121b32;
+  color: #eff6ff;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  font-size: 1rem;
+}
+
+.game-over {
+  position: absolute;
+  margin-top: -3rem;
+  z-index: 5;
+  background: #7f1d1d;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #ef4444;
+}
